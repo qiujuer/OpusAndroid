@@ -2,7 +2,6 @@
 // Created by qiujuer on 2018/10/28.
 //
 #include <jni.h>
-#include <malloc.h>
 #include "OpusJniDecoder.h"
 #include "opus/include/opus.h"
 #define CLASS_NAME_PATH "net/qiujuer/opus/OpusDecoder"

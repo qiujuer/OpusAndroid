@@ -139,8 +139,7 @@ public class MainActivity extends AppCompatActivity {
                     minBufSize);
 
             // init opus encoder
-            OpusEncoder encoder = new OpusEncoder();
-            encoder.init(SAMPLE_RATE, NUM_CHANNELS, OpusEncoder.OPUS_APPLICATION_VOIP);
+            OpusEncoder encoder = new OpusEncoder(SAMPLE_RATE, NUM_CHANNELS, OpusEncoder.OPUS_APPLICATION_VOIP);
 
             // init audio track
             AudioTrack track = new AudioTrack(AudioManager.STREAM_SYSTEM,
@@ -175,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
                         offset += read;
                     }
 
-                    int encoded = encoder.encode(inBuf, FRAME_SIZE, encBuf);
+                    int encoded = encoder.encode(inBuf, encBuf, FRAME_SIZE);
 
                     Log.v(TAG, "Encoded " + inBuf.length + " bytes of audio into " + encoded + " bytes");
 

@@ -12,52 +12,57 @@ public class OpusEncoder {
 
     public static final int OPUS_AUTO = -1;
     public static final int OPUS_BITRATE_MAX = -1;
-
     public static final int OPUS_COMPLEXITY_MAX = 10;
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({OPUS_APPLICATION_VOIP, OPUS_APPLICATION_AUDIO, OPUS_APPLICATION_RESTRICTED_LOWDELAY})
-    public @interface ApplicationType {}
-
-    public static final int OPUS_APPLICATION_VOIP                = 2048;
-    public static final int OPUS_APPLICATION_AUDIO               = 2049;
-    public static final int OPUS_APPLICATION_RESTRICTED_LOWDELAY = 2051;
-
-    private native int nativeInitEncoder(@Annotations.SamplingRate int samplingRate,
-                                         @Annotations.NumberOfChannels int numberOfChannels,
-                                         @ApplicationType int application);
-    private native int nativeSetBitrate(int bitrate);
-    private native int nativeSetComplexity(@IntRange(from=0, to=10) int complexity);
-    private native int nativeEncodeShorts(short[] in, int frames, byte[] out);
-    private native int nativeEncodeBytes(byte[] in, int frames, byte[] out);
-    private native boolean nativeReleaseEncoder();
-
-    static {
-        //System.loadLibrary("senz");
+    public @interface ApplicationType {
     }
 
-    public void init(int sampleRate, int channels, int application) {
-        //OpusError.throwIfError(this.nativeInitEncoder(sampleRate, channels, application));
+    public static final int OPUS_APPLICATION_VOIP = 2048;
+    public static final int OPUS_APPLICATION_AUDIO = 2049;
+    public static final int OPUS_APPLICATION_RESTRICTED_LOWDELAY = 2051;
+
+
+    static {
+        System.loadLibrary("opus-lib");
+    }
+
+    public OpusEncoder(@Annotations.SamplingRate int sampleRate,
+                       @Annotations.NumberOfChannels int channels,
+                       @ApplicationType int application) {
+        long ptr = nCreate(sampleRate, channels, application);
+        if (ptr == 0) {
+            throw new RuntimeException("Initialize Opus Encoder error!");
+        }
+        address = ptr;
     }
 
     public void setBitrate(int bitrate) {
-        //OpusError.throwIfError(this.nativeSetBitrate(bitrate));
+        nSetBitrate(address, bitrate);
     }
 
-    public void setComplexity(int complexity) {
-        //OpusError.throwIfError(this.nativeSetComplexity(complexity));
+    public void setComplexity(@IntRange(from = 0, to = 10) int complexity) {
+        nSetComplexity(address, complexity);
     }
 
-    public int encode(short[] buffer, int frames, byte[] out) {
-        return 30;// OpusError.throwIfError(this.nativeEncodeShorts(buffer, frames, out));
+    public int encode(byte[] in, byte[] out, int frames) {
+        return nEncodeBytes(address, in, out, frames);
     }
 
-    public int encode(byte[] buffer, int frames, byte[] out) {
-        return 60; //OpusError.throwIfError(this.nativeEncodeBytes(buffer, frames, out));
+    public void release() {
+        nRelease(address);
+        address = 0;
     }
 
-    public void close() {
-        //this.nativeReleaseEncoder();
-    }
 
+    private native long nCreate(int samplingRate, int numberOfChannels, int application);
+
+    private native int nSetBitrate(long opusPtr, int bitrate);
+
+    private native int nSetComplexity(long opusPtr, int complexity);
+
+    private native int nEncodeBytes(long opusPtr, byte[] in, byte[] out, int frames);
+
+    private native boolean nRelease(long opusPtr);
 }
