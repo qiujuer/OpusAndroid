@@ -1,8 +1,8 @@
 #include <jni.h>
 #include <stdlib.h>
 #include "native-log.h"
-#include "OpusAndroidDecoder.h"
-#include "OpusAndroidEncoder.h"
+#include "OpusJniDecoder.h"
+#include "OpusJniEncoder.h"
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {

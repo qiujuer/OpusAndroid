@@ -3,9 +3,9 @@
 //
 #include <jni.h>
 #include <malloc.h>
-#include "OpusAndroidDecoder.h"
+#include "OpusJniDecoder.h"
 #include "opus/include/opus.h"
-#define CLASS_NAME_PATH "net/qiujuer/opus/OpusAndroidDecoder"
+#define CLASS_NAME_PATH "net/qiujuer/opus/OpusDecoder"
 extern "C"
 {
 #include "native-opus.h"

@@ -5,6 +5,7 @@
         "string": "cpp",
         "string_view": "cpp",
         "utility": "cpp",
-        "cstddef": "c"
+        "cstddef": "c",
+        "malloc.h": "c"
     }
 }
