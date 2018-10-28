@@ -13,8 +13,8 @@ public class OpusDecoder {
         address = ptr;
     }
 
-    public int decode(byte[] in, byte[] out, int frames) {
-        return nDecodeBytes(address, in, out, frames);
+    public int decode(byte[] in, int inSize, byte[] out, int frames) {
+        return nDecodeBytes(address, in, inSize, out, frames);
     }
 
     public boolean release() {
@@ -23,7 +23,7 @@ public class OpusDecoder {
 
     private native long nCreate(int samplingRate, int numberOfChannels);
 
-    private native int nDecodeBytes(long opusPtr, byte[] in, byte[] out, int frames);
+    private native int nDecodeBytes(long opusPtr, byte[] in, int inSize, byte[] out, int frames);
 
     private native boolean nRelease(long opusPtr);
 

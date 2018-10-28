@@ -20,8 +20,6 @@ import android.widget.Button;
 import net.qiujuer.opus.OpusDecoder;
 import net.qiujuer.opus.OpusEncoder;
 
-import java.util.Arrays;
-
 /**
  * From: https://github.com/martoreto/opuscodec
  * Thanks!!!
@@ -121,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         static final int FRAME_SIZE = 160;
 
         // 1 or 2
-        static final int NUM_CHANNELS = 1;
+        static final int NUM_CHANNELS = 2;
 
         @Override
         public void run() {
@@ -157,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
             track.play();
 
             byte[] inBuf = new byte[FRAME_SIZE * NUM_CHANNELS * 2];
-            byte[] encBuf = new byte[1024];
+            byte[] encBuf = new byte[128];
             byte[] outBuf = new byte[FRAME_SIZE * NUM_CHANNELS * 2];
 
             try {
@@ -178,13 +176,11 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.v(TAG, "Encoded " + inBuf.length + " bytes of audio into " + encoded + " bytes");
 
-                    byte[] encBuf2 = Arrays.copyOf(encBuf, encoded);
-
-                    int decoded = decoder.decode(encBuf2, outBuf, FRAME_SIZE);
+                    int decoded = decoder.decode(encBuf, encoded, outBuf, FRAME_SIZE);
 
                     Log.v(TAG, "Decoded back " + decoded + " bytes");
 
-                    track.write(outBuf, 0, decoded);
+                    track.write(outBuf, 0, decoded * NUM_CHANNELS * 2);
                 }
             } finally {
                 recorder.stop();

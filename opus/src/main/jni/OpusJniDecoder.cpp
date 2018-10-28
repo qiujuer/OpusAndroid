@@ -15,14 +15,12 @@ jlong Java_OpusDecoder_Create(JNIEnv *env, jobject obj, jint samplingRate, jint 
     return (jlong)native_opus_decoder_init((int)samplingRate, (int)numberOfChannels);
 }
 
-jint Java_OpusDecoder_DecodeBytes(JNIEnv *env, jobject obj, jlong opusPtr, jbyteArray in, jbyteArray out, jint frames)
+jint Java_OpusDecoder_DecodeBytes(JNIEnv *env, jobject obj, jlong opusPtr, jbyteArray in,jint inSize, jbyteArray out, jint frames)
 {
-    jint inputArraySize = env->GetArrayLength(in);
-
     jbyte *encodedData = env->GetByteArrayElements(in, 0);
     jbyte *decodedData = env->GetByteArrayElements(out, 0);
 
-    int samples = native_opus_decoder_decode_bytes(opusPtr, (const unsigned char *)encodedData, inputArraySize,
+    int samples = native_opus_decoder_decode_bytes(opusPtr, (const unsigned char *)encodedData, inSize,
                                                    (const unsigned char *)decodedData, frames);
 
     env->ReleaseByteArrayElements(in, encodedData, JNI_ABORT);
@@ -38,7 +36,7 @@ jboolean Java_OpusDecoder_Release(JNIEnv *env, jobject obj, jlong opusPtr)
 
 static JNINativeMethod methods[] = {
     {"nCreate", "(II)J", (void *)Java_OpusDecoder_Create},
-    {"nDecodeBytes", "(J[B[BI)I", (void *)Java_OpusDecoder_DecodeBytes},
+    {"nDecodeBytes", "(J[BI[BI)I", (void *)Java_OpusDecoder_DecodeBytes},
     {"nRelease", "(J)Z", (void *)Java_OpusDecoder_Release}};
 
 int registerOpusDecoderJniMethods(JNIEnv *env)
