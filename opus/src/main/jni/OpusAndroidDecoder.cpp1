@@ -1,0 +1,69 @@
+//
+// Created by qiujuer on 2018/10/28.
+//
+#include <jni.h>
+#include <malloc.h>
+#include "OpusAndroidDecoder.h"
+#include "opus/include/opus.h"
+#include "native-opus.h"
+#define CLASS_NAME_PATH "net/qiujuer/opus/OpusAndroidDecoder"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+class OpusAndroidDecoder
+{
+  public:
+    static jlong create(JNIEnv *env, jobject obj, jint samplingRate, jint numberOfChannels)
+    {
+        return 1001;
+    }
+
+    static jint decodeBytes(JNIEnv *env, jobject obj, jlong opusPtr, jbyteArray in, jbyteArray out, jint frames)
+    {
+        return 1000002;
+    }
+
+    static jboolean release(JNIEnv *env, jobject obj, jlong opusPtr)
+    {
+        return 1;
+    }
+};
+
+jlong Java_OpusDecoder_Create(JNIEnv *env, jobject obj, jint samplingRate, jint numberOfChannels)
+{
+    OpusDecoder *decoder = native_opus_decoder_init((int)samplingRate, (int)numberOfChannels);
+    if (decoder == NULL)
+    {
+        return -1;
+    }
+    return (jlong)decoder;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+static JNINativeMethod methods[] = {
+    {"nCreate", "(II)J", (void *)Java_OpusDecoder_Create},
+    {"nDecodeBytes", "(J[B[BI)I", (void *)OpusAndroidDecoder::decodeBytes},
+    {"nRelease", "(J)Z", (void *)OpusAndroidDecoder::release}};
+
+
+int registerOpusDecoderJniMethods(JNIEnv *env)
+{
+    jclass cls = env->FindClass(CLASS_NAME_PATH);
+    if (cls == NULL)
+    {
+        return JNI_ERR;
+    }
+
+    jint nRes = env->RegisterNatives(cls, methods, sizeof(methods) / sizeof(methods[0]));
+    if (nRes < 0)
+    {
+        return JNI_ERR;
+    }
+
+    return JNI_OK;
+}
