@@ -25,7 +25,7 @@ public class OpusEncoder {
 
 
     static {
-        System.loadLibrary("opus-lib");
+        System.loadLibrary(OpusConstant.LIB_NAME);
     }
 
     public OpusEncoder(@Annotations.SamplingRate int sampleRate,

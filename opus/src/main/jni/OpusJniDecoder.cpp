@@ -3,41 +3,85 @@
 //
 #include <jni.h>
 #include "OpusJniDecoder.h"
-#include "opus/include/opus.h"
+#include "native-log.h"
 #define CLASS_NAME_PATH "net/qiujuer/opus/OpusDecoder"
 extern "C"
 {
+#include "native-opus.h"
+#include "opus/include/opus.h"
 #include "native-opus.h"
 }
 
 jlong Java_OpusDecoder_Create(JNIEnv *env, jobject obj, jint samplingRate, jint numberOfChannels)
 {
-    return (jlong)native_opus_decoder_init((int)samplingRate, (int)numberOfChannels);
+    int error = 0;
+    OpusDecoder *dec = opus_decoder_create((int)samplingRate, (int)numberOfChannels, &error);
+    if (error)
+    {
+        LOGE("Decoder create error: %d", error);
+        return 0;
+    }
+    else
+    {
+        long ptr = (long)dec;
+        LOGI("Decoder create pointer: %ld", ptr);
+        return (jlong)ptr;
+    }
 }
 
-jint Java_OpusDecoder_DecodeBytes(JNIEnv *env, jobject obj, jlong opusPtr, jbyteArray in,jint inSize, jbyteArray out, jint frames)
+jint Java_OpusDecoder_DecodeBytes(JNIEnv *env, jobject obj, jlong opusPtr,
+                                  jbyteArray data, jint dataOffset, jint dataLength,
+                                  jbyteArray pcm, jint pcmOffset, jint pcmLength)
 {
-    jbyte *encodedData = env->GetByteArrayElements(in, 0);
-    jbyte *decodedData = env->GetByteArrayElements(out, 0);
+    LOGI("Decoder decode: %ld, dPos:%d, dLen:%d, pPos:%d, pLen:%d", (long)opusPtr, (int)dataOffset, (int)dataLength, (int)pcmOffset, (int)pcmLength);
 
-    int samples = native_opus_decoder_decode_bytes(opusPtr, (const unsigned char *)encodedData, inSize,
-                                                   (const unsigned char *)decodedData, frames);
+    jboolean isCopy = JNI_FALSE;
+    jbyte *encodedData = env->GetByteArrayElements(data, &isCopy);
+    jbyte *pcmData = env->GetByteArrayElements(pcm, &isCopy);
 
-    env->ReleaseByteArrayElements(in, encodedData, JNI_ABORT);
-    env->ReleaseByteArrayElements(out, decodedData, 0);
+    OpusDecoder *dec = (OpusDecoder *)((long)opusPtr);
+
+    int frames = opus_decoder_get_nb_samples(dec, (const unsigned char *)encodedData, (opus_int32)dataLength);
+    LOGI("Decoder decode get frames: %d", frames);
+
+    int samples = opus_decode(dec, (const unsigned char *)encodedData, (int)dataLength, (opus_int16 *)pcmData, (int)frames, 0);
+
+    env->ReleaseByteArrayElements(data, encodedData, JNI_ABORT);
+    env->ReleaseByteArrayElements(pcm, pcmData, JNI_COMMIT);
 
     return samples;
 }
 
-jboolean Java_OpusDecoder_Release(JNIEnv *env, jobject obj, jlong opusPtr)
+jint Java_OpusDecoder_DecodeBytesWithFrames(JNIEnv *env, jobject obj, jlong opusPtr,
+                                            jbyteArray data, jint dataOffset, jint dataLength,
+                                            jbyteArray pcm, jint pcmOffset, jint pcmLength, jint frames)
 {
-    return native_opus_decoder_release(opusPtr);
+    LOGI("Decoder decode: %ld, dPos:%d, dLen:%d, pPos:%d, pLen:%d, frames:%d", (long)opusPtr, (int)dataOffset, (int)dataLength, (int)pcmOffset, (int)pcmLength, (int)frames);
+
+    jboolean isCopy = JNI_FALSE;
+    jbyte *encodedData = env->GetByteArrayElements(data, &isCopy);
+    jbyte *pcmData = env->GetByteArrayElements(pcm, &isCopy);
+
+    OpusDecoder *dec = (OpusDecoder *)((long)opusPtr);
+    int samples = opus_decode(dec, (const unsigned char *)encodedData, (int)dataLength, (opus_int16 *)pcmData, (int)frames, 0);
+
+    env->ReleaseByteArrayElements(data, encodedData, JNI_ABORT);
+    env->ReleaseByteArrayElements(pcm, pcmData, JNI_COMMIT);
+
+    return samples;
+}
+
+void Java_OpusDecoder_Release(JNIEnv *env, jobject obj, jlong opusPtr)
+{
+    OpusDecoder *dec = (OpusDecoder *)((long)opusPtr);
+    opus_decoder_destroy(dec);
 }
 
 static JNINativeMethod methods[] = {
     {"nCreate", "(II)J", (void *)Java_OpusDecoder_Create},
-    {"nDecodeBytes", "(J[BI[BI)I", (void *)Java_OpusDecoder_DecodeBytes},
-    {"nRelease", "(J)Z", (void *)Java_OpusDecoder_Release}};
+    {"nDecodeBytes", "(J[BII[BII)I", (void *)Java_OpusDecoder_DecodeBytes},
+    {"nDecodeBytesWithFrames", "(J[BII[BIII)I", (void *)Java_OpusDecoder_DecodeBytesWithFrames},
+    {"nRelease", "(J)V", (void *)Java_OpusDecoder_Release}};
 
 int registerOpusDecoderJniMethods(JNIEnv *env)
 {

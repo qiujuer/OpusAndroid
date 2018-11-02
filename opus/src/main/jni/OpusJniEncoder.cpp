@@ -33,7 +33,7 @@ jint Java_OpusEncoder_EncodeBytes(JNIEnv *env, jobject obj, jlong opusPtr, jbyte
     jbyte *encodedSignal = env->GetByteArrayElements(out, 0);
 
     int samples = native_opus_encoder_encode_bytes(opusPtr, (const unsigned char *)audioSignal, frames,
-                                                   (const unsigned char *)encodedSignal, frames);
+                                                   (const unsigned char *)encodedSignal, outputArraySize);
 
     env->ReleaseByteArrayElements(in, audioSignal, JNI_ABORT);
     env->ReleaseByteArrayElements(out, encodedSignal, 0);

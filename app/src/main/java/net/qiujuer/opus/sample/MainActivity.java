@@ -17,8 +17,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import net.qiujuer.opus.OpusConstant;
 import net.qiujuer.opus.OpusDecoder;
 import net.qiujuer.opus.OpusEncoder;
+
+import java.io.IOException;
 
 /**
  * From: https://github.com/martoreto/opuscodec
@@ -119,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         static final int FRAME_SIZE = 160;
 
         // 1 or 2
-        static final int NUM_CHANNELS = 2;
+        static final int NUM_CHANNELS = 1;
 
         @Override
         public void run() {
@@ -154,9 +157,9 @@ public class MainActivity extends AppCompatActivity {
             recorder.startRecording();
             track.play();
 
-            byte[] inBuf = new byte[FRAME_SIZE * NUM_CHANNELS * 2];
-            byte[] encBuf = new byte[128];
-            byte[] outBuf = new byte[FRAME_SIZE * NUM_CHANNELS * 2];
+            byte[] inBuf = new byte[FRAME_SIZE * NUM_CHANNELS * OpusConstant.OPUS_PCM_STRUCT_SIZE_OF_BYTE];
+            byte[] encBuf = new byte[1024];
+            byte[] outBuf = new byte[FRAME_SIZE * NUM_CHANNELS * OpusConstant.OPUS_PCM_STRUCT_SIZE_OF_BYTE];
 
             try {
                 while (!Thread.interrupted()) {
@@ -172,16 +175,19 @@ public class MainActivity extends AppCompatActivity {
                         offset += read;
                     }
 
-                    int encoded = encoder.encode(inBuf, encBuf, FRAME_SIZE);
+                    int encodeSize = encoder.encode(inBuf, encBuf, FRAME_SIZE);
 
-                    Log.v(TAG, "Encoded " + inBuf.length + " bytes of audio into " + encoded + " bytes");
+                    Log.v(TAG, "Encoded " + inBuf.length + " bytes of audio into " + encodeSize + " bytes");
 
-                    int decoded = decoder.decode(encBuf, encoded, outBuf, FRAME_SIZE);
+                    int decodedSize = decoder.decode(encBuf, encodeSize, outBuf);
 
-                    Log.v(TAG, "Decoded back " + decoded + " bytes");
+                    Log.v(TAG, "Decoded back " + decodedSize + " bytes");
 
-                    track.write(outBuf, 0, decoded * NUM_CHANNELS * 2);
+                    track.write(outBuf, 0, decodedSize);
+                    track.flush();
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             } finally {
                 recorder.stop();
                 recorder.release();

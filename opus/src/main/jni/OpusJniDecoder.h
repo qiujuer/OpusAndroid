@@ -1,6 +1,2 @@
-#ifndef OPUSANDROID_OPUSDECODER_H
-#define OPUSANDROID_OPUSDECODER_H
-
+#include <jni.h>
 int registerOpusDecoderJniMethods(JNIEnv*);
-
-#endif //OPUSANDROID_OPUSDECODER_H

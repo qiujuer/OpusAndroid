@@ -116,10 +116,10 @@ endif
 LOCAL_SRC_FILES := \
 	$(patsubst %,$(LOCAL_PATH)/opus/%,$(SILK_SOURCES) $(CELT_SOURCES) $(OPUS_SOURCES)) \
     JniLoader.cpp \
+	OpusJniConstant.cpp \
     OpusJniDecoder.cpp \
     OpusJniEncoder.cpp \
-    native-opus.c \
-    native-lib.cpp
+    native-opus.c
 
 all:
 	echo $(LOCAL_SRC_FILES)
