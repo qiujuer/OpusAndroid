@@ -141,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
 
             // init opus encoder
             OpusEncoder encoder = new OpusEncoder(SAMPLE_RATE, NUM_CHANNELS, OpusEncoder.OPUS_APPLICATION_VOIP);
+            encoder.setComplexity(5);
 
             // init audio track
             AudioTrack track = new AudioTrack(AudioManager.STREAM_SYSTEM,
@@ -176,15 +177,9 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     int encodeSize = encoder.encode(inBuf, encBuf, FRAME_SIZE);
-
-                    Log.v(TAG, "Encoded " + inBuf.length + " bytes of audio into " + encodeSize + " bytes");
-
-                    int decodedSize = decoder.decode(encBuf, encodeSize, outBuf);
-
-                    Log.v(TAG, "Decoded back " + decodedSize + " bytes");
+                    int decodedSize = decoder.decode(encBuf, encodeSize, outBuf, FRAME_SIZE);
 
                     track.write(outBuf, 0, decodedSize);
-                    track.flush();
                 }
             } catch (IOException e) {
                 e.printStackTrace();

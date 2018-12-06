@@ -33,18 +33,30 @@ jint Java_OpusDecoder_DecodeBytes(JNIEnv *env, jobject obj, jlong opusPtr,
                                   jbyteArray data, jint dataOffset, jint dataLength,
                                   jbyteArray pcm, jint pcmOffset, jint pcmLength)
 {
-    LOGI("Decoder decode: %ld, dPos:%d, dLen:%d, pPos:%d, pLen:%d", (long)opusPtr, (int)dataOffset, (int)dataLength, (int)pcmOffset, (int)pcmLength);
+    //LOGI("Decoder decode: %ld, dPos:%d, dLen:%d, pPos:%d, pLen:%d", (long)opusPtr, (int)dataOffset, (int)dataLength, (int)pcmOffset, (int)pcmLength);
 
     jboolean isCopy = JNI_FALSE;
     jbyte *encodedData = env->GetByteArrayElements(data, &isCopy);
     jbyte *pcmData = env->GetByteArrayElements(pcm, &isCopy);
 
+    unsigned char *encodedPacket = (unsigned char *)encodedData;
+    if (dataOffset > 0)
+    {
+        encodedPacket += dataOffset;
+    }
+
+    unsigned char *pcmPacket = (unsigned char *)pcmData;
+    if (pcmOffset > 0)
+    {
+        pcmPacket += pcmOffset;
+    }
+
     OpusDecoder *dec = (OpusDecoder *)((long)opusPtr);
 
-    int frames = opus_decoder_get_nb_samples(dec, (const unsigned char *)encodedData, (opus_int32)dataLength);
-    LOGI("Decoder decode get frames: %d", frames);
+    int frames = opus_decoder_get_nb_samples(dec, encodedPacket, (opus_int32)dataLength);
+    //LOGI("Decoder decode get frames: %d", frames);
 
-    int samples = opus_decode(dec, (const unsigned char *)encodedData, (int)dataLength, (opus_int16 *)pcmData, (int)frames, 0);
+    int samples = opus_decode(dec, encodedPacket, (int)dataLength, (opus_int16 *)pcmPacket, (int)frames, 0);
 
     env->ReleaseByteArrayElements(data, encodedData, JNI_ABORT);
     env->ReleaseByteArrayElements(pcm, pcmData, JNI_COMMIT);
@@ -54,16 +66,28 @@ jint Java_OpusDecoder_DecodeBytes(JNIEnv *env, jobject obj, jlong opusPtr,
 
 jint Java_OpusDecoder_DecodeBytesWithFrames(JNIEnv *env, jobject obj, jlong opusPtr,
                                             jbyteArray data, jint dataOffset, jint dataLength,
-                                            jbyteArray pcm, jint pcmOffset, jint pcmLength, jint frames)
+                                            jbyteArray pcm, jint pcmOffset, jint frames)
 {
-    LOGI("Decoder decode: %ld, dPos:%d, dLen:%d, pPos:%d, pLen:%d, frames:%d", (long)opusPtr, (int)dataOffset, (int)dataLength, (int)pcmOffset, (int)pcmLength, (int)frames);
+    //LOGI("Decoder decode: %ld, dPos:%d, dLen:%d, pPos:%d, frames:%d", (long)opusPtr, (int)dataOffset, (int)dataLength, (int)pcmOffset, (int)frames);
 
     jboolean isCopy = JNI_FALSE;
     jbyte *encodedData = env->GetByteArrayElements(data, &isCopy);
     jbyte *pcmData = env->GetByteArrayElements(pcm, &isCopy);
 
+    unsigned char *encodedPacket = (unsigned char *)encodedData;
+    if (dataOffset > 0)
+    {
+        encodedPacket += dataOffset;
+    }
+
+    unsigned char *pcmPacket = (unsigned char *)pcmData;
+    if (pcmOffset > 0)
+    {
+        pcmPacket += pcmOffset;
+    }
+
     OpusDecoder *dec = (OpusDecoder *)((long)opusPtr);
-    int samples = opus_decode(dec, (const unsigned char *)encodedData, (int)dataLength, (opus_int16 *)pcmData, (int)frames, 0);
+    int samples = opus_decode(dec, encodedPacket, (int)dataLength, (opus_int16 *)pcmPacket, (int)frames, 0);
 
     env->ReleaseByteArrayElements(data, encodedData, JNI_ABORT);
     env->ReleaseByteArrayElements(pcm, pcmData, JNI_COMMIT);
@@ -80,7 +104,7 @@ void Java_OpusDecoder_Release(JNIEnv *env, jobject obj, jlong opusPtr)
 static JNINativeMethod methods[] = {
     {"nCreate", "(II)J", (void *)Java_OpusDecoder_Create},
     {"nDecodeBytes", "(J[BII[BII)I", (void *)Java_OpusDecoder_DecodeBytes},
-    {"nDecodeBytesWithFrames", "(J[BII[BIII)I", (void *)Java_OpusDecoder_DecodeBytesWithFrames},
+    {"nDecodeBytesWithFrames", "(J[BII[BII)I", (void *)Java_OpusDecoder_DecodeBytesWithFrames},
     {"nRelease", "(J)V", (void *)Java_OpusDecoder_Release}};
 
 int registerOpusDecoderJniMethods(JNIEnv *env)

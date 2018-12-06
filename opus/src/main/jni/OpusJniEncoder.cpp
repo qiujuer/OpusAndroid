@@ -3,10 +3,12 @@
 //
 #include <jni.h>
 #include "OpusJniEncoder.h"
-#include "opus/include/opus.h"
+#include "native-log.h"
 #define CLASS_NAME_PATH "net/qiujuer/opus/OpusEncoder"
 extern "C"
 {
+#include "native-opus.h"
+#include "opus/include/opus.h"
 #include "native-opus.h"
 }
 
@@ -25,18 +27,33 @@ jint Java_OpusEncoder_SetComplexity(JNIEnv *env, jobject obj, jlong opusPtr, jin
     return native_opus_encoder_set_complexity(opusPtr, complexity);
 }
 
-jint Java_OpusEncoder_EncodeBytes(JNIEnv *env, jobject obj, jlong opusPtr, jbyteArray in, jbyteArray out, jint frames)
+jint Java_OpusEncoder_EncodeBytes(JNIEnv *env, jobject obj, jlong opusPtr,
+                                  jbyteArray pcm, jint pcmOffset,
+                                  jbyteArray coded, jint codedOffset, jint codedLength, jint frames)
 {
-    jint outputArraySize = env->GetArrayLength(out);
+    //LOGI("Encoder encode: %ld, pPos:%d, cPos:%d, cLen:%d, frames:%d", (long)opusPtr, (int)pcmOffset, (int)codedOffset, (int)codedLength, (int)frames);
 
-    jbyte *audioSignal = env->GetByteArrayElements(in, 0);
-    jbyte *encodedSignal = env->GetByteArrayElements(out, 0);
+    jboolean isCopy = JNI_FALSE;
+    jbyte *pcmData = env->GetByteArrayElements(pcm, &isCopy);
+    jbyte *codedData = env->GetByteArrayElements(coded, &isCopy);
 
-    int samples = native_opus_encoder_encode_bytes(opusPtr, (const unsigned char *)audioSignal, frames,
-                                                   (const unsigned char *)encodedSignal, outputArraySize);
+    unsigned char *pcmPacket = (unsigned char *)pcmData;
+    if (pcmOffset > 0)
+    {
+        pcmPacket += pcmOffset;
+    }
 
-    env->ReleaseByteArrayElements(in, audioSignal, JNI_ABORT);
-    env->ReleaseByteArrayElements(out, encodedSignal, 0);
+    unsigned char *encodedPacket = (unsigned char *)codedData;
+    if (codedOffset > 0)
+    {
+        encodedPacket += codedOffset;
+    }
+
+    OpusEncoder *enc = (OpusEncoder *)((long)opusPtr);
+    int samples = opus_encode(enc, (const opus_int16 *)pcmPacket, frames, encodedPacket, (int)codedLength);
+
+    env->ReleaseByteArrayElements(pcm, pcmData, JNI_ABORT);
+    env->ReleaseByteArrayElements(coded, codedData, JNI_COMMIT);
 
     return samples;
 }
@@ -50,7 +67,7 @@ static JNINativeMethod methods[] = {
     {"nCreate", "(III)J", (void *)Java_OpusEncoder_Create},
     {"nSetBitrate", "(JI)I", (void *)Java_OpusEncoder_SetBitrate},
     {"nSetComplexity", "(JI)I", (void *)Java_OpusEncoder_SetComplexity},
-    {"nEncodeBytes", "(J[B[BI)I", (void *)Java_OpusEncoder_EncodeBytes},
+    {"nEncodeBytes", "(J[BI[BIII)I", (void *)Java_OpusEncoder_EncodeBytes},
     {"nRelease", "(J)Z", (void *)Java_OpusEncoder_Release}};
 
 int registerOpusEncoderJniMethods(JNIEnv *env)

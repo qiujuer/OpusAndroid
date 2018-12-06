@@ -7,9 +7,8 @@ import java.io.IOException;
 
 public class OpusDecoder {
     /* Native pointer to OpusAndroidDecoder */
-    private volatile long mAddress = 0;
+    private volatile long mAddress;
     private final int mChannels;
-    private final int mSampleRate;
 
     public OpusDecoder(@Annotations.SamplingRate int sampleRate,
                        @Annotations.NumberOfChannels int channels) {
@@ -19,7 +18,6 @@ public class OpusDecoder {
         }
         mAddress = ptr;
         mChannels = channels;
-        mSampleRate = sampleRate;
     }
 
     public int decode(byte[] data, byte[] pcm) throws IOException {
@@ -86,7 +84,7 @@ public class OpusDecoder {
             throw new IllegalArgumentException("PcmLength must >= frames*channels*OpusConstant.OPUS_PCM_STRUCT_SIZE_OF_BYTE");
         }
 
-        int countOfSamples = nDecodeBytesWithFrames(mAddress, data, dataOffset, dataLength, pcm, pcmOffset, pcmLength, frames);
+        int countOfSamples = nDecodeBytesWithFrames(mAddress, data, dataOffset, dataLength, pcm, pcmOffset, frames);
         if (countOfSamples > 2) {
             return countOfSamples * mChannels * OpusConstant.OPUS_PCM_STRUCT_SIZE_OF_BYTE;
         }
@@ -102,7 +100,7 @@ public class OpusDecoder {
 
     private native int nDecodeBytes(long address, byte[] data, int dataOffset, int dataLength, byte[] pcm, int pcmOffset, int pcmLength);
 
-    private native int nDecodeBytesWithFrames(long address, byte[] data, int dataOffset, int dataLength, byte[] pcm, int pcmOffset, int pcmLength, int frames);
+    private native int nDecodeBytesWithFrames(long address, byte[] data, int dataOffset, int dataLength, byte[] pcm, int pcmOffset, int frames);
 
     private native void nRelease(long opusPtr);
 
